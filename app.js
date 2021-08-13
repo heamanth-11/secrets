@@ -4,14 +4,14 @@ const ejs = require("ejs");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
 const app = express();
+const md5 = require("md5");
+const session = require("express-session");
+const passport = require("passport");
 app.use(bodyParser.urlencoded({extended:false}));
 app.set("view engine","ejs");
 app.use(express.static("public"));
 mongoose.connect('mongodb://localhost:27017/users', {useNewUrlParser: true, useUnifiedTopology: true});
 const userSchema = mongoose.Schema({Email:String,Password:String});
-const encrypt = require("mongoose-encryption");
-
-userSchema.plugin(encrypt,{secret:process.env.SECRET,encryptedFields:["Password"]});
 const User = new mongoose.model("User",userSchema);
 app.listen("3000",function(){
     console.log("server started in port 3000");
@@ -29,7 +29,7 @@ app.get("/register",function(req,res){
 app.post("/register",function(req,res){
     const newUser = new User({
         Email:req.body.username,
-        Password:req.body.password
+        Password:md5(req.body.password)
     });
         newUser.save(function(err){
             if(!err){
@@ -41,7 +41,7 @@ app.post("/register",function(req,res){
 });
 app.post("/login",function(req,res){
     const email = req.body.username;
-    const pwd = req.body.password;
+    const pwd = md5(req.body.password);
     User.findOne({Email:email},function(err,result){
         if(err){
             console.log(err);
